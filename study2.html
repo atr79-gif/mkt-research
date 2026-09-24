@@ -54,7 +54,7 @@ function saveForm(names){names.forEach(n=>{const e=document.querySelector(`[name
 function consent(){
 render(`<div class="card"><h1>Research Study</h1>
 <p><strong>Exploring AI and Physical Trade Show Experiences</strong></p>
-<p>You are invited to take part in a research study about how people explore and evaluate industry trade shows. You will be asked to imagine considering attendance at a fictional trade show and then answer questions about your experience.</p>
+<p>You are invited to take part in a research study looking at how individuals explore and evaluate industry trade shows. You will be asked to consider attending a fictional trade show and then answer questions based on your experience learning about FutureTech Expo.</p>
 <p>The study should take approximately <strong>8–10 minutes</strong>. Participation is voluntary. You may stop at any time before submitting your responses.</p>
 <p>Please do not enter your name, email address, employer name, or other identifying information in the survey.</p>
 <p class="small">Before launching this study with participants, obtain the ethics approval/waiver required by your institution and use the consent wording approved by your ethics committee.</p>
@@ -67,16 +67,16 @@ function scenario(){
 render(`<div class="card"><h2>Imagine the following situation</h2>
 <p>You are considering attending <strong>FutureTech Expo</strong>, a large industry trade show featuring technology companies, new products, product demonstrations, industry experts, talks, and opportunities to meet other professionals.</p>
 <p>The expo will take place at a physical venue. You are deciding whether attending in person would be worth your time and effort.</p>
-<p>Before making your decision, you will now have an opportunity to explore information about the expo.</p>
+<p>Before making your decision, you will now have an opportunity to learn more about the expo.</p>
 <div class="nav"><button onclick="consent()">Back</button><button class="primary" onclick="discovery()">Continue</button></div>
 </div>`,12);
 }
 
 const items = [
   {id:"ex1",t:"Which exhibitors might be relevant to someone interested in AI and customer engagement?"},
-  {id:"ex2",t:"What products or technologies could I see at the expo?"},
-  {id:"ex3",t:"What demonstrations might be interesting to attend?"},
-  {id:"ex4",t:"What opportunities are there to meet other industry professionals?"},
+  {id:"ex2",t:"What products or technologies should I see at the expo?"},
+  {id:"ex3",t:"Which demonstrations might be interesting to attend?"},
+  {id:"ex4",t:"What opportunities are there to network with other industry professionals?"},
   {id:"ex5",t:"Is there anything at the expo that I might discover unexpectedly?"}
 ];
 
@@ -84,8 +84,8 @@ const responses = {
 ex1:"Three exhibitors may be especially relevant: Nexa AI, which demonstrates AI tools for customer engagement; VisionWorks, which develops customer analytics platforms; and ConnectSphere, which offers AI-supported customer experience solutions. Each exhibitor will have representatives available at the physical expo.",
 ex2:"Nexa AI will demonstrate an AI-powered customer engagement platform. VisionWorks will demonstrate real-time customer analytics. ConnectSphere will showcase an AI-supported customer experience system. Visitors can speak directly with representatives and see live demonstrations.",
 ex3:"The expo includes live product demonstrations, interactive technology showcases, and short expert presentations. Demonstrations allow visitors to see products in operation and ask representatives questions in real time.",
-ex4:"The expo provides opportunities to meet exhibitors, industry professionals, speakers, and other attendees. Some interactions are scheduled, while others may happen informally while visiting booths and demonstrations.",
-ex5:"The exhibitor list includes several companies outside the main areas you might initially search for. Because exhibitors are located throughout the venue, visitors may encounter products, companies, conversations, or demonstrations they did not specifically plan to seek out."
+ex4:"The expo provides opportunities to meet exhibitors, industry professionals, speakers and other attendees. Some interactions are scheduled, while others may happen informally while visiting booths and demonstrations.",
+ex5:"The exhibitor list includes several companies outside the main areas you might initially search for. Because exhibitors are located throughout the venue, visitors may encounter products, companies or demonstrations they did not specifically intend to seek out."
 };
 
 function discovery(){
@@ -110,9 +110,9 @@ function askAI(id){
 }
 function controlDiscovery(){
 render(`<div class="card"><h2>FutureTech Expo Website</h2>
-<p>Explore the event using the conventional information pages below. Please open at least three sections before continuing.</p>
+<p>Explore the event using the conventional information pages below. Please open at least three pages before continuing.</p>
 <div id="pages"></div>
-<p><strong>Choose a section:</strong></p>
+<p><strong>Choose a page:</strong></p>
 <div id="choices">${items.map(x=>`<button onclick="openPage('${x.id}')">${x.t.replace("?","")}</button>`).join("")}</div>
 <div id="finish" class="hidden"><p>You've explored the expo. When you are ready, continue to the questionnaire.</p><button class="primary" onclick="postDiscovery()">Continue</button></div>
 </div>`,25);
@@ -128,7 +128,7 @@ function postDiscovery(){questionnaire1();}
 
 function questionnaire1(){
 const qs=[
-["cur1","I am curious to see what I would discover at the physical expo."],
+["cur1","I am curious to see more at the physical expo."],
 ["cur2","I would like to find out more about what I could experience at the expo."],
 ["cur3","The information I encountered made me curious about the physical event."],
 ["ant1","I would look forward to experiencing the expo in person."],
@@ -155,7 +155,7 @@ function questionnaire2(){
 const qs=[
 ["ser1","I value discovering things that I was not specifically looking for."],
 ["ser2","Unexpected discoveries are an important part of a trade show experience."],
-["ser3","I enjoy encountering products or companies that I did not plan to explore."],
+["ser3","I enjoy encountering products or companies that I did not plan to visit."],
 ["ser4","Some of the most valuable things at a trade show are things I discover unexpectedly."],
 ["ai1","The tool helped me discover information relevant to my interests."],
 ["info1","The information provided was useful."],
@@ -167,19 +167,30 @@ render(`<div class="card"><h2>A few more questions</h2>${qs.map(x=>radioScale(x[
 <p>Imagine registration for FutureTech Expo is now open.</p>
 <label><input type="radio" name="reg" value="yes" required> I would register my interest.</label><br>
 <label><input type="radio" name="reg" value="no"> I would not register my interest.</label>
-<h3>Attention check</h3><p>Please select <strong>6</strong> below.</p>
-<select name="attention" required><option value="">Select...</option>${[1,2,3,4,5,6,7].map(x=>`<option>${x}</option>`).join("")}</select>
 <div class="nav"><button onclick="questionnaire1()">Back</button><button class="primary" onclick="finishQ2()">Continue</button></div></div>`,75);
 }
-function finishQ2(){
-const names=["ser1","ser2","ser3","ser4","ai1","info1","info2","easy1"];
-for(const n of names) if(!document.querySelector(`[name="${n}"]:checked`)){alert("Please answer all questions before continuing.");return;}
-if(!document.querySelector('[name="reg"]:checked')||!document.querySelector('[name="attention"]').value){alert("Please complete the remaining questions.");return;}
-saveForm(names);state.answers.reg=get("reg");state.answers.attention=document.querySelector('[name="attention"]').value;demographics();
-}
+    function finishQ2(){
+      const names=["ser1","ser2","ser3","ser4","ai1","info1","info2","easy1"];
+
+      for(const n of names) {
+        if(!document.querySelector(`[name="${n}"]:checked`)){
+          alert("Please answer all questions before continuing.");
+          return;
+        }
+      }
+
+      if(!document.querySelector('[name="reg"]:checked')){
+        alert("Please complete the remaining question.");
+        return;
+      }
+
+      saveForm(names);
+      state.answers.reg=get("reg");
+      demographics();
+      }
 function demographics(){
 render(`<div class="card"><h2>About you</h2>
-<p class="small">Please answer these questions only if you are comfortable doing so. Do not provide identifying information.</p>
+<p class="small">Please answer the remaining questions. Do not provide identifying information.</p>
 <label>Age group<select name="age"><option value="">Prefer not to say</option><option>18–24</option><option>25–34</option><option>35–44</option><option>45–54</option><option>55–64</option><option>65+</option></select></label>
 <label>Have you attended a professional trade show or industry expo before?<select name="prior"><option value="">Prefer not to say</option><option>Yes</option><option>No</option></select></label>
 <label>How often do you attend professional trade shows/expos?<select name="frequency"><option value="">Prefer not to say</option><option>Never</option><option>Once</option><option>2–3 times</option><option>4–5 times</option><option>6+ times</option></select></label>
