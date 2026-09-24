@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FutureTech Expo — Study 2</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:900px;margin:0 auto;padding:24px;line-height:1.5;background:#f7f7f7;color:#222}
+.card{background:white;border:1px solid #ddd;border-radius:10px;padding:24px;margin:18px 0}
+button{padding:11px 18px;border-radius:7px;border:1px solid #777;background:#fff;cursor:pointer;margin:5px 5px 5px 0}
+button.primary{background:#222;color:white}
+input,textarea,select{width:100%;padding:10px;margin:6px 0 14px;box-sizing:border-box}
+.scale{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:8px 0 18px}
+.scale label{border:1px solid #ccc;border-radius:6px;padding:8px;text-align:center;cursor:pointer}
+.small{font-size:.9em;color:#666}.hidden{display:none}.chat{border:1px solid #ddd;border-radius:8px;padding:12px;margin:10px 0;background:#fafafa}
+.ai{background:#f0f0f0}.user{background:#fff}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+.progress{height:8px;background:#ddd;border-radius:8px;overflow:hidden}.bar{height:100%;background:#222;width:0}
+</style>
+</head>
+<body>
+<div class="progress"><div id="bar" class="bar"></div></div>
+<div id="app"></div>
+
+<script>
+const CONFIG = {
+  // Replace with your deployed Google Apps Script web-app URL.
+  SUBMIT_URL: "https://script.google.com/macros/s/AKfycbzZp9MxwNFa2YYmnkKLCnzt4vCCAoDnzr-MkhD6S6i0L9bkRMGcoJB9CIXWbo52jifWGA/exec",
+  STUDY_ID: "JM_STUDY2_FUTURETECH_V1"
+};
+
+let state = {
+  pid: crypto.randomUUID ? crypto.randomUUID() : "p_"+Date.now()+"_"+Math.random().toString(36).slice(2),
+  condition: Math.random() < .5 ? "AI" : "CONTROL",
+  start: new Date().toISOString(),
+  expoInteractions: [],
+  answers: {}
+};
+
+const app = document.getElementById("app");
+const bar = document.getElementById("bar");
+
+function progress(n){ bar.style.width = Math.min(100,n)+"%"; }
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function render(html,pct){app.innerHTML=html;progress(pct);}
+function radioScale(name, label){
+  return `<div><p><strong>${label}</strong></p><div class="scale">
+  ${[1,2,3,4,5,6,7].map(v=>`<label><input required type="radio" name="${name}" value="${v}"><br>${v}</label>`).join("")}
+  </div><div class="small">1 = Strongly disagree &nbsp;&nbsp; 7 = Strongly agree</div></div>`;
+}
+function get(name){const e=document.querySelector(`[name="${name}"]:checked`);return e?e.value:null;}
+function saveForm(names){names.forEach(n=>{const e=document.querySelector(`[name="${n}"]:checked`)||document.querySelector(`[name="${n}"]`);if(e) state.answers[n]=e.value;});}
+
+function consent(){
+render(`<div class="card"><h1>Research Study</h1>
+<p><strong>Exploring AI and Physical Trade Show Experiences</strong></p>
+<p>You are invited to take part in a research study about how people explore and evaluate industry trade shows. You will be asked to imagine considering attendance at a fictional trade show and then answer questions about your experience.</p>
+<p>The study should take approximately <strong>8–10 minutes</strong>. Participation is voluntary. You may stop at any time before submitting your responses.</p>
+<p>Please do not enter your name, email address, employer name, or other identifying information in the survey.</p>
+<p class="small">Before launching this study with participants, obtain the ethics approval/waiver required by your institution and use the consent wording approved by your ethics committee.</p>
+<label><input type="checkbox" id="agree"> I have read the information above and voluntarily agree to participate.</label>
+<div class="nav"><span></span><button class="primary" onclick="if(document.getElementById('agree').checked)scenario();else alert('Please indicate your consent to continue.')">Continue</button></div>
+</div>`,5);
+}
+
+function scenario(){
+render(`<div class="card"><h2>Imagine the following situation</h2>
+<p>You are considering attending <strong>FutureTech Expo</strong>, a large industry trade show featuring technology companies, new products, product demonstrations, industry experts, talks, and opportunities to meet other professionals.</p>
+<p>The expo will take place at a physical venue. You are deciding whether attending in person would be worth your time and effort.</p>
+<p>Before making your decision, you will now have an opportunity to explore information about the expo.</p>
+<div class="nav"><button onclick="consent()">Back</button><button class="primary" onclick="discovery()">Continue</button></div>
+</div>`,12);
+}
+
+const items = [
+  {id:"ex1",t:"Which exhibitors might be relevant to someone interested in AI and customer engagement?"},
+  {id:"ex2",t:"What products or technologies could I see at the expo?"},
+  {id:"ex3",t:"What demonstrations might be interesting to attend?"},
+  {id:"ex4",t:"What opportunities are there to meet other industry professionals?"},
+  {id:"ex5",t:"Is there anything at the expo that I might discover unexpectedly?"}
+];
+
+const responses = {
+ex1:"Three exhibitors may be especially relevant: Nexa AI, which demonstrates AI tools for customer engagement; VisionWorks, which develops customer analytics platforms; and ConnectSphere, which offers AI-supported customer experience solutions. Each exhibitor will have representatives available at the physical expo.",
+ex2:"Nexa AI will demonstrate an AI-powered customer engagement platform. VisionWorks will demonstrate real-time customer analytics. ConnectSphere will showcase an AI-supported customer experience system. Visitors can speak directly with representatives and see live demonstrations.",
+ex3:"The expo includes live product demonstrations, interactive technology showcases, and short expert presentations. Demonstrations allow visitors to see products in operation and ask representatives questions in real time.",
+ex4:"The expo provides opportunities to meet exhibitors, industry professionals, speakers, and other attendees. Some interactions are scheduled, while others may happen informally while visiting booths and demonstrations.",
+ex5:"The exhibitor list includes several companies outside the main areas you might initially search for. Because exhibitors are located throughout the venue, visitors may encounter products, companies, conversations, or demonstrations they did not specifically plan to seek out."
+};
+
+function discovery(){
+  if(state.condition==="AI") aiDiscovery(); else controlDiscovery();
+}
+
+function aiDiscovery(){
+render(`<div class="card"><h2>AI Expo Assistant</h2>
+<p>The expo has an AI-powered assistant that can help you explore exhibitors, products, demonstrations and networking opportunities.</p>
+<div id="chat"></div>
+<p><strong>Select a question to ask the assistant:</strong></p>
+<div id="choices">${items.map(x=>`<button onclick="askAI('${x.id}')">${x.t}</button>`).join("")}</div>
+<div id="finish" class="hidden"><p>You've explored the expo. When you are ready, continue to the questionnaire.</p><button class="primary" onclick="postDiscovery()">Continue</button></div>
+</div>`,25);
+}
+function askAI(id){
+  const q=items.find(x=>x.id===id); state.expoInteractions.push(id);
+  document.getElementById("chat").insertAdjacentHTML("beforeend",`<div class="chat user"><strong>You:</strong> ${esc(q.t)}</div><div class="chat ai"><strong>AI Assistant:</strong> ${esc(responses[id])}</div>`);
+  document.querySelectorAll("#choices button").forEach(b=>b.disabled=true);
+  setTimeout(()=>document.querySelectorAll("#choices button").forEach(b=>b.disabled=false),150);
+  if(state.expoInteractions.length>=3) document.getElementById("finish").classList.remove("hidden");
+}
+function controlDiscovery(){
+render(`<div class="card"><h2>FutureTech Expo Website</h2>
+<p>Explore the event using the conventional information pages below. Please open at least three sections before continuing.</p>
+<div id="pages"></div>
+<p><strong>Choose a section:</strong></p>
+<div id="choices">${items.map(x=>`<button onclick="openPage('${x.id}')">${x.t.replace("?","")}</button>`).join("")}</div>
+<div id="finish" class="hidden"><p>You've explored the expo. When you are ready, continue to the questionnaire.</p><button class="primary" onclick="postDiscovery()">Continue</button></div>
+</div>`,25);
+}
+function openPage(id){
+  const q=items.find(x=>x.id===id); state.expoInteractions.push(id);
+  document.getElementById("pages").insertAdjacentHTML("beforeend",`<div class="card"><h3>${esc(q.t)}</h3><p>${esc(responses[id])}</p></div>`);
+  document.querySelectorAll("#choices button").forEach(b=>b.disabled=true);
+  setTimeout(()=>document.querySelectorAll("#choices button").forEach(b=>b.disabled=false),150);
+  if(state.expoInteractions.length>=3) document.getElementById("finish").classList.remove("hidden");
+}
+function postDiscovery(){questionnaire1();}
+
+function questionnaire1(){
+const qs=[
+["cur1","I am curious to see what I would discover at the physical expo."],
+["cur2","I would like to find out more about what I could experience at the expo."],
+["cur3","The information I encountered made me curious about the physical event."],
+["ant1","I would look forward to experiencing the expo in person."],
+["ant2","I would be excited to experience the expo physically."],
+["pev1","Attending the expo in person would provide value that I could not obtain digitally."],
+["pev2","There is value in experiencing this expo physically."],
+["pev3","The physical experience of attending the expo would be valuable to me."],
+["pev4","Attending the expo would provide benefits beyond the information available online."],
+["pev5","The physical experience would be worth the time and effort required to attend."],
+["att1","I would consider attending this expo."],
+["att2","I would be likely to attend this expo."],
+["att3","I would make an effort to attend this expo."],
+["att4","I would consider registering for this expo."]
+];
+render(`<div class="card"><h2>Your evaluation</h2><p>Please indicate how much you agree with each statement.</p>${qs.map(x=>radioScale(x[0],x[1])).join("")}
+<div class="nav"><span></span><button class="primary" onclick="finishQ1()">Continue</button></div></div>`,55);
+}
+function finishQ1(){
+const names=["cur1","cur2","cur3","ant1","ant2","pev1","pev2","pev3","pev4","pev5","att1","att2","att3","att4"];
+for(const n of names) if(!document.querySelector(`[name="${n}"]:checked`)){alert("Please answer all questions before continuing.");return;}
+saveForm(names); questionnaire2();
+}
+function questionnaire2(){
+const qs=[
+["ser1","I value discovering things that I was not specifically looking for."],
+["ser2","Unexpected discoveries are an important part of a trade show experience."],
+["ser3","I enjoy encountering products or companies that I did not plan to explore."],
+["ser4","Some of the most valuable things at a trade show are things I discover unexpectedly."],
+["ai1","The tool helped me discover information relevant to my interests."],
+["info1","The information provided was useful."],
+["info2","The information provided was informative."],
+["easy1","The way I explored the expo was easy to use."]
+];
+render(`<div class="card"><h2>A few more questions</h2>${qs.map(x=>radioScale(x[0],x[1])).join("")}
+<h3>Behavioural choice</h3>
+<p>Imagine registration for FutureTech Expo is now open.</p>
+<label><input type="radio" name="reg" value="yes" required> I would register my interest.</label><br>
+<label><input type="radio" name="reg" value="no"> I would not register my interest.</label>
+<h3>Attention check</h3><p>Please select <strong>6</strong> below.</p>
+<select name="attention" required><option value="">Select...</option>${[1,2,3,4,5,6,7].map(x=>`<option>${x}</option>`).join("")}</select>
+<div class="nav"><button onclick="questionnaire1()">Back</button><button class="primary" onclick="finishQ2()">Continue</button></div></div>`,75);
+}
+function finishQ2(){
+const names=["ser1","ser2","ser3","ser4","ai1","info1","info2","easy1"];
+for(const n of names) if(!document.querySelector(`[name="${n}"]:checked`)){alert("Please answer all questions before continuing.");return;}
+if(!document.querySelector('[name="reg"]:checked')||!document.querySelector('[name="attention"]').value){alert("Please complete the remaining questions.");return;}
+saveForm(names);state.answers.reg=get("reg");state.answers.attention=document.querySelector('[name="attention"]').value;demographics();
+}
+function demographics(){
+render(`<div class="card"><h2>About you</h2>
+<p class="small">Please answer these questions only if you are comfortable doing so. Do not provide identifying information.</p>
+<label>Age group<select name="age"><option value="">Prefer not to say</option><option>18–24</option><option>25–34</option><option>35–44</option><option>45–54</option><option>55–64</option><option>65+</option></select></label>
+<label>Have you attended a professional trade show or industry expo before?<select name="prior"><option value="">Prefer not to say</option><option>Yes</option><option>No</option></select></label>
+<label>How often do you attend professional trade shows/expos?<select name="frequency"><option value="">Prefer not to say</option><option>Never</option><option>Once</option><option>2–3 times</option><option>4–5 times</option><option>6+ times</option></select></label>
+<label>Employment status<select name="employment"><option value="">Prefer not to say</option><option>Employed full-time</option><option>Employed part-time</option><option>Self-employed</option><option>Student</option><option>Other</option></select></label>
+<label>Industry/sector (optional)<input name="sector" maxlength="100"></label>
+<div class="nav"><button onclick="questionnaire2()">Back</button><button class="primary" onclick="submitStudy()">Submit study</button></div></div>`,90);
+}
+async function submitStudy(){
+state.answers.age=document.querySelector('[name="age"]').value;
+state.answers.prior=document.querySelector('[name="prior"]').value;
+state.answers.frequency=document.querySelector('[name="frequency"]').value;
+state.answers.employment=document.querySelector('[name="employment"]').value;
+state.answers.sector=document.querySelector('[name="sector"]').value;
+state.end=new Date().toISOString();
+const payload={study_id:CONFIG.STUDY_ID,participant_id:state.pid,condition:state.condition,start:state.start,end:state.end,interaction_count:state.expoInteractions.length,interactions:state.expoInteractions.join("|"),...state.answers};
+try{
+if(CONFIG.SUBMIT_URL.includes("PASTE_")) throw new Error("not configured");
+await fetch(CONFIG.SUBMIT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+render(`<div class="card"><h1>Thank you</h1><p>Your response has been submitted.</p><p>You may now close this window.</p></div>`,100);
+}catch(e){
+  localStorage.setItem("study2_response",JSON.stringify(payload));
+  render(`<div class="card"><h1>Thank you</h1><p>Your response has been recorded locally, but the online submission endpoint has not yet been configured.</p><p><strong>For a real study, do not launch until the submission endpoint is configured and tested.</strong></p></div>`,100);
+}
+}
+consent();
+</script>
+</body>
+</html>
